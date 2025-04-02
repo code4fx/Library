@@ -7,7 +7,7 @@
 
 #property link      "https://www.mql5.com"
 #property strict
-#include <System_Templates/ErrorDescriptions.mqh>
+#include <Library/ErrorDescriptions.mqh>
 
 //Only Forex pairs can be traded simultaneously.
 //Therefore if a symbol is not forex, then this EA no longer supports multi symbol trading.

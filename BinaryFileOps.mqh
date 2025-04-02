@@ -8,7 +8,7 @@
 #property link      "https://www.mql5.com"
 #property strict
 
-#include <System_Templates/ErrorDescriptions.mqh>
+#include <Library/ErrorDescriptions.mqh>
 
 template <typename T>
 class BinaryFileOps {

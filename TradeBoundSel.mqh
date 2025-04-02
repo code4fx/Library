@@ -1,3 +1,4 @@
+//###<Template_System.mq5>
 //+------------------------------------------------------------------+
 //|                                              TradeConditions.mqh |
 //|                                                Copyright 2022, . |
@@ -5,7 +6,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2022, ."
 #property link      "https://www.mql5.com"
-#include <System_Templates/ErrorDescriptions.mqh>
+#include <Library/ErrorDescriptions.mqh>
 
 // Sets conditions to block trades based on
 // Time

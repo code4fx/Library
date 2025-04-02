@@ -1,3 +1,4 @@
+//###<Template_System.mq5>
 //+------------------------------------------------------------------+
 //|                                                       Trader.mqh |
 //|                                                Copyright 2022, . |
@@ -6,9 +7,9 @@
 #property copyright "Copyright 2022, ."
 #property link      "https://www.mql5.com"
 
-#include <System_Templates/ErrorDescriptions.mqh>
+#include <Library/ErrorDescriptions.mqh>
 #include <Trade/Trade.mqh>
-#include <System_Templates/DataObject.mqh>
+#include <Library/DataObject.mqh>
 
 input group "//=== TRADING"
 
@@ -17,64 +18,64 @@ input int InpMagicNumber = 1201; //Magic Number
 class CTrader {
 
     private:
-        string symbol_;
-        bool init_status_;
-        int magic_number_;
+        string m_symbol;
+        bool m_init_status;
+        int m_magic_number;
 
-        CTrade* trader_;
+        CTrade* m_trader;
         
-        double symbol_point;
+        double m_symbol_point;
          
     public:
         CTrader() {}
         CTrader(int magic_number, string symbol) {
-            initTrader(magic_number, symbol);
+            InitTrader(magic_number, symbol);
         }
         
-        ~CTrader() { delete trader_; }
-        bool initTrader(int, string);
-        bool sell(double price, double lot_size, double sl, double tp, CDataObject *data);
-        bool buy(double price, double lot_size, double sl, double tp, CDataObject *data);
-        bool closeSell(long);
-        bool closeBuy(long);
-        void closeAllBySymbol();
-        int positionsCount();
-        bool isPositionClosed(ulong position);
-        void setInitStatus(bool init_result) { init_status_ = init_result; }
-        bool getInitStatus() { return init_status_; }
-        bool modifyPosition(long ticket, double sl, double tp);
-        long getMagicNumber() { return magic_number_; }
+        ~CTrader() { delete m_trader; }
+        bool InitTrader(int, string);
+        bool Sell(double price, double lot_size, double sl, double tp, CDataObject *data);
+        bool Buy(double price, double lot_size, double sl, double tp, CDataObject *data);
+        bool CloseSell(long);
+        bool CloseBuy(long);
+        void CloseAllBySymbol();
+        int PositionsCount();
+        bool IsPositionClosed(ulong position);
+        void SetInitStatus(bool init_result) { m_init_status = init_result; }
+        bool GetInitStatus() { return m_init_status; }
+        bool ModifyPosition(long ticket, double sl, double tp);
+        long GetMagicNumber() { return m_magic_number; }
 };
 
-bool CTrader::initTrader(int magic_no, string symbol) {
+bool CTrader::InitTrader(int magic_no, string symbol) {
 
-    symbol_ = symbol;
-    magic_number_ = magic_no;
-    trader_ = new CTrade();
+    m_symbol = symbol;
+    m_magic_number = magic_no;
+    m_trader = new CTrade();
 
-    trader_.SetExpertMagicNumber(magic_no);
+    m_trader.SetExpertMagicNumber(magic_no);
 
-    symbol_point = SymbolInfoDouble(symbol_, SYMBOL_POINT);
+    m_symbol_point = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
     
-    setInitStatus(true);
+    SetInitStatus(true);
     
     return true;
 }
 
-bool CTrader::sell(double price, double lot_size, double sl, double tp, CDataObject *data) {  
+bool CTrader::Sell(double price, double lot_size, double sl, double tp, CDataObject *data) {  
     
     bool success = true;
     MqlTradeResult results;
     MqlTick tick_info;
     
     if (data) {
-        SymbolInfoTick(symbol_, tick_info);
+        SymbolInfoTick(m_symbol, tick_info);
         data.pre_entry_price = tick_info.ask;
         data.pre_entry_time = tick_info.time;
-        data.entry_spread = (int)SymbolInfoInteger(symbol_, SYMBOL_SPREAD);
+        data.entry_spread = (int)SymbolInfoInteger(m_symbol, SYMBOL_SPREAD);
     }
     
-    if(!trader_.Sell(lot_size, symbol_, price, sl, tp)) {
+    if(!m_trader.Sell(lot_size, m_symbol, price, sl, tp)) {
         print_error("opening sell trade failed", __FUNCTION__);
         print_error(__FUNCTION__);
         success = false;
@@ -82,7 +83,7 @@ bool CTrader::sell(double price, double lot_size, double sl, double tp, CDataObj
     
     if (success) {
         if (data) {
-            trader_.Result(results);
+            m_trader.Result(results);
             data.lot_size = results.volume;
             data.position_type = POSITION_TYPE_SELL;
             data.entry_price = results.price;
@@ -94,20 +95,20 @@ bool CTrader::sell(double price, double lot_size, double sl, double tp, CDataObj
     return success; 
 }
 
-bool CTrader::buy(double price, double lot_size, double sl, double tp, CDataObject *data) {
+bool CTrader::Buy(double price, double lot_size, double sl, double tp, CDataObject *data) {
 
     bool success = true;
     MqlTradeResult results;
     MqlTick tick_info;
     
     if (data) {
-        SymbolInfoTick(symbol_, tick_info);
+        SymbolInfoTick(m_symbol, tick_info);
         data.pre_entry_price = tick_info.ask;
         data.pre_entry_time = tick_info.time;
-        data.entry_spread = (int)SymbolInfoInteger(symbol_, SYMBOL_SPREAD);
+        data.entry_spread = (int)SymbolInfoInteger(m_symbol, SYMBOL_SPREAD);
     }
 
-    if(!trader_.Buy(lot_size, symbol_, price, sl, tp)) {
+    if(!m_trader.Buy(lot_size, m_symbol, price, sl, tp)) {
         print_error("opening buy trade failed", __FUNCTION__);
         print_error(__FUNCTION__);
         success = false;   
@@ -115,7 +116,7 @@ bool CTrader::buy(double price, double lot_size, double sl, double tp, CDataObje
     
     if (success) {
         if (data) {
-            trader_.Result(results);
+            m_trader.Result(results);
             data.lot_size = results.volume;
             data.position_type = POSITION_TYPE_BUY;
             data.entry_price = results.price;
@@ -127,23 +128,23 @@ bool CTrader::buy(double price, double lot_size, double sl, double tp, CDataObje
     return success;   
 }
 
-bool CTrader::modifyPosition(long ticket, double sl, double tp) {
+bool CTrader::ModifyPosition(long ticket, double sl, double tp) {
     return false;
 }
 
-bool CTrader::closeSell(long ticket) {
-    return trader_.PositionClose(ticket, 1);
+bool CTrader::CloseSell(long ticket) {
+    return m_trader.PositionClose(ticket, 1);
 }
  
-bool CTrader::closeBuy(long ticket) {
-    return trader_.PositionClose(ticket, 1);
+bool CTrader::CloseBuy(long ticket) {
+    return m_trader.PositionClose(ticket, 1);
 }
 
-void CTrader::closeAllBySymbol() {
-    while (trader_.PositionClose(symbol_, 1) == true) {}
+void CTrader::CloseAllBySymbol() {
+    while (m_trader.PositionClose(m_symbol, 1) == true) {}
 }
 
-int CTrader::positionsCount() {
+int CTrader::PositionsCount() {
 
     int allCount = PositionsTotal();
     int posCount = 0;
@@ -151,8 +152,8 @@ int CTrader::positionsCount() {
     for (int i = allCount - 1; i >= 0; i--) {
     ulong ticket = PositionGetTicket(i);
         if (PositionSelectByTicket(ticket)) {
-            if (PositionGetString(POSITION_SYMBOL) == symbol_ &&
-                PositionGetInteger(POSITION_MAGIC) == magic_number_ ) {
+            if (PositionGetString(POSITION_SYMBOL) == m_symbol &&
+                PositionGetInteger(POSITION_MAGIC) == m_magic_number) {
                 posCount++;
             }
         }
@@ -218,14 +219,14 @@ int CTrader::positionsCount() {
 //        }
 //    }
 //    
-//    double bid = SymbolInfoDouble(symbol_, SYMBOL_BID);
-//    double ask = SymbolInfoDouble(symbol_, SYMBOL_ASK);
+//    double bid = SymbolInfoDouble(m_symbol, SYMBOL_BID);
+//    double ask = SymbolInfoDouble(m_symbol, SYMBOL_ASK);
 //    
 //    SLManager(array, arrSize, ask, bid);
 //    TPManager(array, arrSize, ask, bid);
 //}
 
-bool CTrader::isPositionClosed(ulong position) {
+bool CTrader::IsPositionClosed(ulong position) {
     if(PositionSelectByTicket(position))
        return false;
     else

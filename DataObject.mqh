@@ -1,3 +1,4 @@
+//###<Template_System.mq5>
 //+------------------------------------------------------------------+
 //|                                              TradeCDataObject.mqh |
 //|                                                Copyright 2022, . |
@@ -7,7 +8,7 @@
 #property link      "https://www.mql5.com"
 
 #include <Object.mqh>
-#include <System_Templates/Utilities.mqh>
+#include <Library/Utilities.mqh>
 
 // For simplicity sake, true encapsulation has been relaxed.
 
@@ -136,7 +137,7 @@ void CDataObject::CopyObject(CDataObject &obj) {
 
 	Copy(position_id, obj.position_id);
 
-    Copy(symbol, obj.symbol);
+   Copy(symbol, obj.symbol);
 	Copy(position_type, obj.position_type);
 	Copy(close_reason, obj.close_reason);
 

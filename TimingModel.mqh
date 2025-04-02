@@ -1,3 +1,4 @@
+//###<Template_System.mq5>
 //+------------------------------------------------------------------+
 //|                                          Signal_Indicator_EA.mq4 |
 //|                                    programmed by mojalefa nkwana | 
@@ -16,7 +17,7 @@
 #define H4 14400
 #define D1 86400
 #define W1 604800
-#define MN1 2592000
+#define MN1 2592000 
 //---
 
 enum ENUM_TIMING_MODEL {
@@ -33,40 +34,40 @@ input ENUM_TIMEFRAMES InpTradeTF = PERIOD_CURRENT; //Trading Timeframe
 class CExecTimer {
 
     protected:
-        string symbol_;
-        ENUM_TIMEFRAMES timeframe_;
+        string m_symbol;
+        ENUM_TIMEFRAMES m_timeframe;
         
-        string lastSymbol;
-        bool isOpen;
-        datetime sessionStart;
-        datetime sessionEnd;
-        bool init_status_;
+        string m_lastSymbol;
+        bool m_isOpen;
+        datetime m_sessionStart;
+        datetime m_sessionEnd;
+        bool m_init_status;
 
-        datetime ArrayTime[], LastTime;
+        datetime m_ArrayTime[], m_LastTime;
 
     public:
-        virtual bool execTime() = 0;
-        virtual bool initExecModel(string, ENUM_TIMEFRAMES) { return false; }
-        ENUM_TIMEFRAMES getTimeFrame() { return timeframe_; }
+        virtual bool ExecTime() = 0;
+        virtual bool InitExecModel(string, ENUM_TIMEFRAMES) { return false; }
+        ENUM_TIMEFRAMES GetTimeFrame() { return m_timeframe; }
         
-        void initSessionVariables();
+        void InitSessionVariables();
         bool IsMarketOpen();
         
-        void setInitStatus(bool init_result) { init_status_ = init_result; }
-        bool getInitStatus() { return init_status_; }
+        void SetInitStatus(bool init_result) { m_init_status = init_result; }
+        bool GetInitStatus() { return m_init_status; }
 };
 
 bool CExecTimer::IsMarketOpen() {
     
     datetime time = TimeCurrent();
     
-    if (lastSymbol == symbol_ && sessionEnd > sessionStart) {
-        if ((isOpen && time >= sessionStart && time <= sessionEnd) || 
-            (!isOpen && time > sessionStart && time < sessionEnd)) 
-            return isOpen;
+    if (m_lastSymbol == m_symbol && m_sessionEnd > m_sessionStart) {
+        if ((m_isOpen && time >= m_sessionStart && time <= m_sessionEnd) || 
+            (!m_isOpen && time > m_sessionStart && time < m_sessionEnd)) 
+            return m_isOpen;
     }
     
-    lastSymbol = symbol_;
+    m_lastSymbol = m_symbol;
     
     MqlDateTime mtime;
     TimeToStruct(time, mtime);
@@ -82,104 +83,104 @@ bool CExecTimer::IsMarketOpen() {
     datetime fromTime; 
     datetime toTime;
     
-    sessionStart = dayStart;
-    sessionEnd = dayEnd;
+    m_sessionStart = dayStart;
+    m_sessionEnd = dayEnd;
     
     for (int session = 0;;session++) {
-        if (!SymbolInfoSessionTrade(symbol_, (ENUM_DAY_OF_WEEK)mtime.day_of_week, session, fromTime, toTime)) {
-            sessionEnd = dayEnd;
-            isOpen = false;
-            return isOpen;
+        if (!SymbolInfoSessionTrade(m_symbol, (ENUM_DAY_OF_WEEK)mtime.day_of_week, session, fromTime, toTime)) {
+            m_sessionEnd = dayEnd;
+            m_isOpen = false;
+            return m_isOpen;
         }
         
         if (seconds < fromTime) {// not inside a session
-            sessionEnd = dayStart + fromTime;
-            isOpen = false;
-            return isOpen;
+            m_sessionEnd = dayStart + fromTime;
+            m_isOpen = false;
+            return m_isOpen;
         }
         
         if (seconds > toTime) { // maybe a later session
-            sessionStart = dayStart + toTime; 
+            m_sessionStart = dayStart + toTime; 
             continue;
         }
         
         // at this point must be inside a session
-        sessionStart = dayStart + fromTime;
-        sessionEnd = dayStart + toTime;
-        isOpen = true;
-        return isOpen;
+        m_sessionStart = dayStart + fromTime;
+        m_sessionEnd = dayStart + toTime;
+        m_isOpen = true;
+        return m_isOpen;
     }
     
     return false;
 }
 
-void CExecTimer::initSessionVariables() {
-    lastSymbol = "";
-    isOpen = false;
-    sessionStart = 0;
-    sessionEnd = 0;
+void CExecTimer::InitSessionVariables() {
+    m_lastSymbol = "";
+    m_isOpen = false;
+    m_sessionStart = 0;
+    m_sessionEnd = 0;
 }
 
 class CTickModel : public CExecTimer{
     public:
         CTickModel() {}
         ~CTickModel() {}
-        virtual bool execTime();
+        virtual bool ExecTime();
 };
 
 class COPCModel : public CExecTimer {
     private:
-        int tf_seconds;
-        datetime last_time;
-        int execution_timer;
+        int m_tf_seconds;
+        datetime m_last_time;
+        int m_execution_timer;
         
-        MqlTick tick;
-        datetime next_time;
+        MqlTick m_tick;
+        datetime m_next_time;
         
     public:
         COPCModel(string symbol, ENUM_TIMEFRAMES _bar_timeframe) {
-            last_time = 0;
-            if (initExecModel(symbol, _bar_timeframe))
-                setInitStatus(true);
+            m_last_time = 0;
+            if (InitExecModel(symbol, _bar_timeframe))
+                SetInitStatus(true);
             else
-                setInitStatus(false);
+                SetInitStatus(false);
         }
         ~COPCModel() {}
-        bool initExecModel(string _symbol, ENUM_TIMEFRAMES _bar_timeframe);
-        virtual bool execTime();
-        bool isNewBar(datetime time);  
+        bool InitExecModel(string _symbol, ENUM_TIMEFRAMES _bar_timeframe);
+        virtual bool ExecTime();
+        bool IsNewBar(datetime time);  
 };
 
-bool COPCModel::initExecModel(string symbol, ENUM_TIMEFRAMES _bar_timeframe) {
+bool COPCModel::InitExecModel(string symbol, ENUM_TIMEFRAMES bar_timeframe) {
   
-    symbol_ = symbol;
-    timeframe_ = _bar_timeframe;
+    m_symbol = symbol;
+    m_timeframe = bar_timeframe;
     
-    tf_seconds = PeriodSeconds(timeframe_);
-    next_time = 0;
+    m_tf_seconds = PeriodSeconds(m_timeframe);
+    m_next_time = 0;
     
-    initSessionVariables();
-    isNewBar(TimeCurrent());
+    InitSessionVariables();
+    IsNewBar(TimeCurrent());
     
     return true;
 }
 
-bool COPCModel::isNewBar(datetime curr_time) {
+bool COPCModel::IsNewBar(datetime curr_time) {
     
     bool result = false;
     
-    if (last_time != curr_time) {
-        last_time = curr_time;
+    if (m_last_time != curr_time) {
+        m_last_time = curr_time;
         result = true;
     }
     
     return result;
 }
 
-bool COPCModel::execTime() {
-    datetime curr_time = iTime(symbol_, timeframe_, 1);
+bool COPCModel::ExecTime() {
+    datetime curr_time = iTime(m_symbol, m_timeframe, 1);
 
-    return isNewBar(curr_time) && IsMarketOpen();
+    return IsNewBar(curr_time) && IsMarketOpen();
 }
 
 class CTickLvlOPC : public CExecTimer {
@@ -196,26 +197,26 @@ class CTickLvlOPC : public CExecTimer {
         int seconds;
         
     public:
-        CTickLvlOPC(string symbol, ENUM_TIMEFRAMES _bar_timeframe) {
-            if (initExecModel(symbol, _bar_timeframe))
-                setInitStatus(true);
+        CTickLvlOPC(string symbol, ENUM_TIMEFRAMES bar_timeframe) {
+            if (InitExecModel(symbol, bar_timeframe))
+                SetInitStatus(true);
             else
-                setInitStatus(false);
+                SetInitStatus(false);
         }
         ~CTickLvlOPC() {}
-        bool firstTFTick(datetime t, ENUM_TIMEFRAMES tf);
-        bool isNewBar();
-        virtual bool execTime();
+        bool FirstTFTick(datetime t, ENUM_TIMEFRAMES tf);
+        bool IsNewBar();
+        virtual bool ExecTime();
 };
 
-bool CTickModel::execTime() {
+bool CTickModel::ExecTime() {
     return IsMarketOpen();   
 }
 
 //firstTFTick - determines if the tick at time 't' within the timeframe 'tf'
 //is appoximately the first tick of the timeframe.
 //The function allows the tick to be within the first minute, but not greater.
-bool CTickLvlOPC::firstTFTick(datetime t, ENUM_TIMEFRAMES tf) {
+bool CTickLvlOPC::FirstTFTick(datetime t, ENUM_TIMEFRAMES tf) {
 
     seconds = PeriodSeconds(tf);
     TimeToStruct(t, dt);
@@ -292,11 +293,11 @@ bool CTickLvlOPC::firstTFTick(datetime t, ENUM_TIMEFRAMES tf) {
         return false;
 }
 
-bool CTickLvlOPC::isNewBar() {
+bool CTickLvlOPC::IsNewBar() {
     
-    SymbolInfoTick(symbol_, tick);
+    SymbolInfoTick(m_symbol, tick);
     
-    fst_tick = firstTFTick(tick.time, timeframe_);
+    fst_tick = FirstTFTick(tick.time, m_timeframe);
 
     if  (!fst_tick) {
         flag = true;
@@ -310,30 +311,30 @@ bool CTickLvlOPC::isNewBar() {
     return false;
 }
 
-bool CTickLvlOPC::execTime(void) {
-    return isNewBar() && IsMarketOpen();
+bool CTickLvlOPC::ExecTime(void) {
+    return IsNewBar() && IsMarketOpen();
 }
 
 class CTimingModel {
     private:
-        CExecTimer *exectimer;
+        CExecTimer *m_exectimer;
     public:
     CTimingModel(string symbol, ENUM_TIMING_MODEL timing_model, ENUM_TIMEFRAMES tf) {
         switch (timing_model) {
             case EVERY_TICK:
-                exectimer = new CTickModel();
+                m_exectimer = new CTickModel();
             break;
             case OPEN_OF_CANDLE:
-                exectimer = new COPCModel(symbol, tf);
+                m_exectimer = new COPCModel(symbol, tf);
             break;
             case TICK_LVL_OPC:
-                exectimer = new CTickLvlOPC(symbol, tf);
+                m_exectimer = new CTickLvlOPC(symbol, tf);
             break;
         }
     }
-    ~CTimingModel() { delete exectimer; }
-    virtual bool execTime() { return exectimer.execTime(); }
-    ENUM_TIMEFRAMES getTimeFrame() { return exectimer.getTimeFrame(); }
-    void setInitStatus(bool init_result) { exectimer.setInitStatus(init_result); }
-    bool getInitStatus() { return exectimer.getInitStatus(); }
+    ~CTimingModel() { delete m_exectimer; }
+    virtual bool ExecTime() { return m_exectimer.ExecTime(); }
+    ENUM_TIMEFRAMES GetTimeFrame() { return m_exectimer.GetTimeFrame(); }
+    void SetInitStatus(bool init_result) { m_exectimer.SetInitStatus(init_result); }
+    bool GetInitStatus() { return m_exectimer.GetInitStatus(); }
 };

@@ -1,3 +1,4 @@
+//###<Template_System.mq5>
 //+------------------------------------------------------------------+
 //|                                                  ExitManager.mqh |
 //|                                  Copyright 2024, MetaQuotes Ltd. |
@@ -9,7 +10,7 @@
 
 #include <Trade/Trade.mqh>
 #include <Arrays/List.mqh>
-#include <System_Templates/DataObject.mqh>
+#include <Library/DataObject.mqh>
 
 input group "//=== TRADE EXIT SETTINGS"
 
@@ -42,104 +43,104 @@ input ENUM_DRAW InpExitLines = 1; //Client Exit Lines
 class CExitManager {
 
 private:
-    string symbol_;
-    int sl_manager_;
-    int tp_manager_;
-    int ts_toggle_;
+    string m_symbol;
+    int m_sl_manager;
+    int m_tp_manager;
+    int m_ts_toggle;
     
-    int loss_evasion_;
+    int m_loss_evasion;
     
-    double bid_;
-    double ask_;
+    double m_bid;
+    double m_ask;
     
-    bool init_status_;
+    bool m_init_status;
     
-    int draw_;
+    int m_draw;
     
-    CTrade* trader_;
+    CTrade* m_trader;
 
 public:
     CExitManager(int magic_number, string symbol, int loss_evasion, int sl_manager, int tp_manager, int ts_togg) {
-        initExitManager(magic_number, symbol, loss_evasion, sl_manager, tp_manager, ts_togg);
+        InitExitManager(magic_number, symbol, loss_evasion, sl_manager, tp_manager, ts_togg);
     }
-    ~CExitManager() { delete trader_; }
-    void setInitStatus(bool init_result) { init_status_ = init_result; }
-    bool getInitStatus() { return init_status_; }
-    int getTSStatus() { return ts_toggle_; }
-    int getSLManage() { return sl_manager_; }
-    void setAsk(double ask) { ask_ = ask; }
-    void setBid(double bid) { bid_ = bid; }
-    double getBid() { return bid_; }
-    double getAsk() { return ask_; }
-    bool initExitManager(int magic_no, string symbol, int loss_av, int sl_manager, int tp_manager, int ts_togg);
-    void exitManager(CList *list);
+    ~CExitManager() { delete m_trader; }
+    void SetInitStatus(bool init_result) { m_init_status = init_result; }
+    bool GetInitStatus() { return m_init_status; }
+    int GetTSStatus() { return m_ts_toggle; }
+    int GetSLManage() { return m_sl_manager; }
+    void SetAsk(double ask) { m_ask = ask; }
+    void SetBid(double bid) { m_bid = bid; }
+    double GetBid() { return m_bid; }
+    double GetAsk() { return m_ask; }
+    bool InitExitManager(int magic_no, string symbol, int loss_av, int sl_manager, int tp_manager, int ts_togg);
+    void ExitManager(CList *list);
     
-    double getSL(double sl);
-    double getTP(double tp);
+    double GetSL(double sl);
+    double GetTP(double tp);
     
-    void lossEvasion(ulong pos_id, int type, double sl, double tp);
-    void stopLossExit(ulong pos_id, int type, double sl);
-    void takeProfitExit(ulong pos_id, int type, double tp);
+    void LossEvasion(ulong pos_id, int type, double sl, double tp);
+    void StopLossExit(ulong pos_id, int type, double sl);
+    void TakeProfitExit(ulong pos_id, int type, double tp);
     
-    void draw(ulong pos_id, string exit_type, double val, color clr=clrGray);
-    void redraw(ulong pos_id, string exit_type, double val);
-    void erase(ulong pos_id, string exit_type);
-    bool chartFind(long &chart_id);
-    bool objectFind(string obj_name);
+    void Draw(ulong pos_id, string exit_type, double val, color clr=clrGray);
+    void Redraw(ulong pos_id, string exit_type, double val);
+    void Erase(ulong pos_id, string exit_type);
+    bool ChartFind(long &chart_id);
+    bool CbjectFind(string obj_name);
 };
 
-bool CExitManager::initExitManager(int magic_number, string symbol, int loss_evasion, int sl_manager, int tp_manager,
+bool CExitManager::InitExitManager(int magic_number, string symbol, int loss_evasion, int sl_manager, int tp_manager,
                                     int ts_toggle) {
     
-    symbol_ = symbol;
-    loss_evasion_ = loss_evasion;
-    sl_manager_ = sl_manager;
-    tp_manager_ = tp_manager;
-    ts_toggle_ = ts_toggle;
+    m_symbol = symbol;
+    m_loss_evasion = loss_evasion;
+    m_sl_manager = sl_manager;
+    m_tp_manager = tp_manager;
+    m_ts_toggle = ts_toggle;
     
-    trader_ = new CTrade();
-    trader_.SetExpertMagicNumber(magic_number);
+    m_trader = new CTrade();
+    m_trader.SetExpertMagicNumber(magic_number);
     
-    setInitStatus(true);
+    SetInitStatus(true);
     return true;
 }
 
-void CExitManager::exitManager(CList *list) {
+void CExitManager::ExitManager(CList *list) {
 
-    setAsk(SymbolInfoDouble(symbol_, SYMBOL_ASK));
-    setBid(SymbolInfoDouble(symbol_, SYMBOL_BID));
+    SetAsk(SymbolInfoDouble(m_symbol, SYMBOL_ASK));
+    SetBid(SymbolInfoDouble(m_symbol, SYMBOL_BID));
     
     for (CDataObject *curr = list.GetFirstNode(); curr != NULL; curr = list.GetNextNode()) {
-        takeProfitExit(curr.position_id, curr.position_type, curr.take_profit);
-        lossEvasion(curr.position_id, curr.position_type, curr.final_stoploss, curr.take_profit);
+        TakeProfitExit(curr.position_id, curr.position_type, curr.take_profit);
+        LossEvasion(curr.position_id, curr.position_type, curr.final_stoploss, curr.take_profit);
     }
 }
 
-void CExitManager::lossEvasion(ulong pos_id, int type, double new_sl, double tp) {
+void CExitManager::LossEvasion(ulong pos_id, int type, double new_sl, double tp) {
 
-    if (sl_manager_ == SERVER_SIDE) {
+    if (m_sl_manager == SERVER_SIDE) {
     
         bool selected = PositionSelectByTicket(pos_id);
         double curr_sl = PositionGetDouble(POSITION_SL);
         double curr_tp = PositionGetDouble(POSITION_TP);
-        double point = SymbolInfoDouble(symbol_, SYMBOL_POINT);
-        long stop_level = SymbolInfoInteger(symbol_, SYMBOL_TRADE_STOPS_LEVEL);
+        double point = SymbolInfoDouble(m_symbol, SYMBOL_POINT);
+        long stop_level = SymbolInfoInteger(m_symbol, SYMBOL_TRADE_STOPS_LEVEL);
         
         if (new_sl > 0 && selected &&  curr_sl != new_sl) {
             if (type == POSITION_TYPE_BUY) {
-                if (new_sl < getBid() + (stop_level * point))
-                    trader_.PositionModify(pos_id, new_sl, tp);
+                if (new_sl < GetBid() + (stop_level * point))
+                    m_trader.PositionModify(pos_id, new_sl, tp);
             }
             else if (type == POSITION_TYPE_SELL) {
-                if (new_sl > getAsk() + (stop_level * point))
-                    trader_.PositionModify(pos_id, new_sl, tp);
+                if (new_sl > GetAsk() + (stop_level * point))
+                    m_trader.PositionModify(pos_id, new_sl, tp);
             }
         }
     }
     else {
-        switch (loss_evasion_) {
+        switch (m_loss_evasion) {
             case STOPLOSS: {
-                stopLossExit(pos_id, type, new_sl);
+                StopLossExit(pos_id, type, new_sl);
             } break;
             case GRIDREC: {
                 
@@ -148,52 +149,52 @@ void CExitManager::lossEvasion(ulong pos_id, int type, double new_sl, double tp)
     }
 }
 
-void CExitManager::stopLossExit(ulong pos_id, int type, double sl) {
+void CExitManager::StopLossExit(ulong pos_id, int type, double sl) {
 
-    if (sl_manager_ == SERVER_SIDE || sl <= 0)
+    if (m_sl_manager == SERVER_SIDE || sl <= 0)
         return;
     
     switch(type) {
         case POSITION_TYPE_BUY: {
-            if (getBid() <= sl) {
-                trader_.PositionClose(pos_id);
+            if (GetBid() <= sl) {
+                m_trader.PositionClose(pos_id);
             }
         } break;
         case POSITION_TYPE_SELL: {
-            if (getAsk() >= sl) {
-                trader_.PositionClose(pos_id);
+            if (GetAsk() >= sl) {
+                m_trader.PositionClose(pos_id);
             }
         } break;
     }
 }
 
-void CExitManager::takeProfitExit(ulong pos_id, int type, double tp) {
+void CExitManager::TakeProfitExit(ulong pos_id, int type, double tp) {
 
-    if (tp_manager_ == SERVER_SIDE || tp <= 0)
+    if (m_tp_manager == SERVER_SIDE || tp <= 0)
         return;
         
     switch(type) {
         case POSITION_TYPE_BUY: {
-            if (getBid() >= tp) {
-                trader_.PositionClose(pos_id);
+            if (GetBid() >= tp) {
+                m_trader.PositionClose(pos_id);
             }
         } break;
         case POSITION_TYPE_SELL: {
-            if (getAsk() <= tp) {
-                trader_.PositionClose(pos_id);
+            if (GetAsk() <= tp) {
+                m_trader.PositionClose(pos_id);
             }
         } break;
     }
 }
 
-void CExitManager::draw(ulong pos_id, string exit_type, double val, color clr=clrGray) {
+void CExitManager::Draw(ulong pos_id, string exit_type, double val, color clr=clrGray) {
 
-    if (getSLManage() == SERVER_SIDE || val <= 0)
+    if (GetSLManage() == SERVER_SIDE || val <= 0)
         return;
 
     long chart_id = 0;
     
-    if (!chartFind(chart_id))
+    if (!ChartFind(chart_id))
         return;
         
     string obj_name; 
@@ -210,14 +211,14 @@ void CExitManager::draw(ulong pos_id, string exit_type, double val, color clr=cl
     
 }
 
-void CExitManager::redraw(ulong pos_id, string exit_type, double val) {
+void CExitManager::Redraw(ulong pos_id, string exit_type, double val) {
 
-    if (getSLManage() == SERVER_SIDE || val <= 0)
+    if (GetSLManage() == SERVER_SIDE || val <= 0)
         return;
         
     long chart_id;
     
-    if (!chartFind(chart_id))
+    if (!ChartFind(chart_id))
         return;
     
     string obj_name; 
@@ -229,14 +230,14 @@ void CExitManager::redraw(ulong pos_id, string exit_type, double val) {
     ObjectMove(chart_id, obj_name, 0, 0, val);
 }
 
-void CExitManager::erase(ulong pos_id, string exit_type) {
+void CExitManager::Erase(ulong pos_id, string exit_type) {
 
-    if (getSLManage() == SERVER_SIDE)
+    if (GetSLManage() == SERVER_SIDE)
         return;
     
     long chart_id;
     
-    if (!chartFind(chart_id))
+    if (!ChartFind(chart_id))
         return;
 
     string obj_name; 
@@ -248,9 +249,9 @@ void CExitManager::erase(ulong pos_id, string exit_type) {
     ObjectDelete(chart_id, obj_name);
 }
 
-bool CExitManager::chartFind(long &id) {
+bool CExitManager::ChartFind(long &id) {
     for (long curr = ChartFirst(); curr != -1; curr = ChartNext(curr)) {
-        if (ChartSymbol(curr) == symbol_) {
+        if (ChartSymbol(curr) == m_symbol) {
             id = curr;
             return true;
         }
@@ -258,14 +259,14 @@ bool CExitManager::chartFind(long &id) {
     return false;
 }
 
-double CExitManager::getSL(double sl) {
-    if (sl_manager_ == SERVER_SIDE)
+double CExitManager::GetSL(double sl) {
+    if (m_sl_manager == SERVER_SIDE)
         return sl;
     return 0;
 }
 
-double CExitManager::getTP(double tp) {
-    if (tp_manager_ == SERVER_SIDE)
+double CExitManager::GetTP(double tp) {
+    if (m_tp_manager == SERVER_SIDE)
         return tp;
     return 0;
 }
