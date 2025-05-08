@@ -5,7 +5,7 @@
 //+------------------------------------------------------------------+
 #property copyright "Copyright 2022, ."
 #property link      "https://www.mql5.com"
-#include "TradeBoundSel.mqh"
+
 // Sets conditions to block trades based on
 // Time
 // Number of trades
@@ -13,7 +13,7 @@
 // Events 
 // etc.
 
-class CTradeBounds {
+class CTradeContraint {
     private:
         string symbol_;
         bool init_status_;
