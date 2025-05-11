@@ -53,7 +53,7 @@ public:
 	double highest_equity;//every tick
 	double lowest_equity;//every tick
 
-	double lot_size;//open
+	double volume;//open
 	double take_profit;//open
 	double initial_stoploss;//open (stoploss)
 	double final_stoploss;//every tick (trailed stoploss)
@@ -117,7 +117,7 @@ CDataObject::CDataObject() {
 	highest_equity = NULL;
 	lowest_equity = NULL;
 
-	lot_size = NULL;
+	volume = NULL;
 	initial_stoploss = NULL;
 	take_profit = NULL;
 	final_stoploss = NULL;
@@ -167,7 +167,7 @@ void CDataObject::CopyObject(CDataObject &obj) {
 	Copy(highest_equity, obj.highest_equity);
 	Copy(lowest_equity, obj.lowest_equity);
 
-	Copy(lot_size, obj.lot_size);
+	Copy(volume, obj.volume);
 	Copy(initial_stoploss, obj.initial_stoploss);
 	Copy(take_profit, obj.take_profit);
 	Copy(final_stoploss, obj.final_stoploss);
