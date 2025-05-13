@@ -140,6 +140,7 @@ public:
    //--- trade request
    string            FormatRequest(string &str,const MqlTradeRequest &request) const;
    string            FormatRequestResult(string &str,const MqlTradeRequest &request,const MqlTradeResult &result) const;
+   datetime          GetOpenTime(int ticket);
 
 protected:
    bool              FillingCheck(const string symbol);
@@ -155,10 +156,10 @@ protected:
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
 CTrade::CTrade(void) : m_async_mode(false),
-                       m_magic(0),
-                       m_deviation(10),
-                       m_type_filling(ORDER_FILLING_FOK),
-                       m_log_level(LOG_LEVEL_ERRORS)
+   m_magic(0),
+   m_deviation(10),
+   m_type_filling(ORDER_FILLING_FOK),
+   m_log_level(LOG_LEVEL_ERRORS)
   {
    SetMarginMode();
 //--- initialize protected data
@@ -1704,5 +1705,17 @@ bool CTrade::SelectPosition(const string symbol)
       res=PositionSelect(symbol);
 //---
    return(res);
+  }
+
+//+------------------------------------------------------------------+
+//| Get Open time of position passed as argument                     |
+//+------------------------------------------------------------------+
+datetime CTrade::GetOpenTime(int ticket)
+  {
+   if(PositionSelectByTicket(ticket))
+     {
+      return ((datetime)PositionGetInteger(POSITION_TIME));
+     }
+   return NULL;
   }
 //+------------------------------------------------------------------+

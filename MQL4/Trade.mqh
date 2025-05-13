@@ -43,6 +43,7 @@ public:
                        const double price,const double sl,const double tp,const string comment="");
     bool PositionModify(const ulong ticket,const double sl,const double tp);
     bool PositionClose(const ulong ticket,const ulong deviation=ULONG_MAX);
+    datetime GetOpenTime(int ticket);
 
 protected:
     void ClearStructures(void);
@@ -54,15 +55,15 @@ void CTrade::Result(MqlTradeResult &result) const {
     result.price = m_result.price;
 }
 
-bool CTrade::PositionOpen(const string symbol,const int order_type,const double volume,
-                          double price,const double sl,const double tp,const string comment) {
+bool CTrade::PositionOpen(const string symbol, const int order_type, const double volume,
+                          double price, const double sl, const double tp, const string comment) {
     ClearStructures();
    
-    bool result = false;
+    bool success = false;
     int ticket = -1;
     
     if(order_type != OP_BUY && order_type != OP_SELL) {
-        return result;
+        return success;
     }
     
     ticket = OrderSend(symbol, order_type, volume, price, (int)m_deviation, sl, tp, comment, (int)m_magic);
@@ -72,28 +73,65 @@ bool CTrade::PositionOpen(const string symbol,const int order_type,const double 
         bool check = OrderSelect(ticket, SELECT_BY_TICKET);
         m_result.price = OrderOpenPrice();
         m_result.volume = OrderLots();
-        result = true;  
+        success = true;  
     }
     
-    return result;
+    return success;
 }
 
-bool CTrade::PositionModify(const ulong ticket,const double sl,const double tp) {
+bool CTrade::PositionModify(const ulong ticket, const double sl, const double tp) {
 
-    return false;
+    if (!OrderSelect((int)ticket, SELECT_BY_TICKET)) return false;
+
+    ClearStructures();
+
+    string symbol = OrderSymbol();
+    int type = OrderType();
+    double price = OrderOpenPrice();
+    bool success = false;
+
+    if (OrderModify((int)ticket, price, sl, tp, 0)) {
+        success = true;
+        bool check = OrderSelect((int)ticket, SELECT_BY_TICKET);
+        m_result.price = OrderOpenPrice();
+        m_result.volume = OrderLots();
+    }
+    
+    return success;
 }
-
 
 bool CTrade::PositionClose(const ulong ticket, const ulong deviation) {
 
+    if (!OrderSelect((int)ticket, SELECT_BY_TICKET)) return false;
+
+    string symbol = OrderSymbol();
+    int type = OrderType();
+    double volume = OrderLots();
+    double price;
+
+    if (type == ORDER_TYPE_BUY) {
+        price = SymbolInfoDouble(symbol, SYMBOL_BID);
+    }
+    else if (type == ORDER_TYPE_SELL) {
+        price = SymbolInfoDouble(symbol, SYMBOL_ASK);
+    }
+    else {
+        return false;
+    }
+
+    if (OrderClose((int)ticket, volume, price, (int)((deviation==ULONG_MAX) ? m_deviation : deviation)))
+        return true;
+
     return false;
 }
 
-//+------------------------------------------------------------------+
-//| Clear structures m_request,m_result and m_check_result           |
-//+------------------------------------------------------------------+
 void CTrade::ClearStructures(void) {
     ZeroMemory(m_result);
 }
 
-//+------------------------------------------------------------------+
+datetime CTrade::GetOpenTime(int ticket) {
+    if (OrderSelect(ticket, SELECT_BY_TICKET)) {
+        return ((datetime)OrderOpenTime());
+    }
+    return NULL;
+}
