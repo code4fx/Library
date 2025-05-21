@@ -88,6 +88,7 @@ protected:
 
 public:
     CTrader() { SetInitResult(INIT_FAILED); };
+    CTrader(int magic_no) { Init(magic_no); };
     ~CTrader() {};
     void Init(int magic_no);
     int GetInitResult() { return m_init_result; }
@@ -143,16 +144,18 @@ bool CTrader::Buy(const string symbol,
     MqlTick tick_data;
     MqlTradeResult result;
 
-    //Clear custom trade data structure
-    ZeroMemory(m_custom_data);
+     if (fill_custom_data) {
+		//Clear custom trade data structure
+    	ZeroMemory(m_custom_data);
+    	
+        //Populate tick_data struct
+        SymbolInfoTick(symbol, tick_data);
 
-    //Populate tick_data struct
-    SymbolInfoTick(symbol, tick_data);
-
-    //Capture pre-trade data
-    m_custom_data.pre_entry_price = tick_data.ask;
-    m_custom_data.pre_entry_time = tick_data.time;
-    m_custom_data.entry_spread = (int)SymbolInfoInteger(symbol, SYMBOL_SPREAD);
+        //Capture pre-trade data
+        m_custom_data.pre_entry_price = tick_data.ask;
+        m_custom_data.pre_entry_time = tick_data.time;
+        m_custom_data.entry_spread = (int)SymbolInfoInteger(symbol, SYMBOL_SPREAD);
+    }
 
     success = PositionOpen(symbol, (ENUM_ORDER_TYPE)order_type, volume, price, sl, tp);
 
@@ -189,10 +192,11 @@ bool CTrader::Sell(const string symbol,
     MqlTick tick_data;
     MqlTradeResult result;
 
-    //Clear custom trade data structure
-    ZeroMemory(m_custom_data);
+    
 
     if (fill_custom_data) {
+    	//Clear custom trade data structure
+   		ZeroMemory(m_custom_data);
 
         //Populate tick_data struct
         SymbolInfoTick(symbol, tick_data);

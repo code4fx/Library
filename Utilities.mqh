@@ -355,3 +355,7 @@ string Base10ToString(ulong n) {
     }
     return result;
 }
+
+double PointsToDouble(string symbol, int points) {
+	return ((double)points * SymbolInfoDouble(symbol, SYMBOL_POINT));
+}
